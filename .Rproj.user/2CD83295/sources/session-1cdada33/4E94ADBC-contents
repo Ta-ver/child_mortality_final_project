@@ -1,0 +1,115 @@
+---
+title: "poverty_nigeria"
+author: "T. A."
+date: "2024-07-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r gdp}
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(ggplot2,
+               plotly,
+               htmlwidgets,
+               webshot2)
+webshot2::install_phantomjs()
+
+# GDP Growth Rate Data (2010-2023)
+years <- 2010:2023
+gdp_growth_rate <- c(8.0, 4.9, 4.3, 5.4, 6.3, 2.7, -1.6, 0.8, 1.9, 2.2, -1.8, 3.4, 3.2, 3.1)
+
+# Create Data Frame
+data_gdp <- data.frame(years, gdp_growth_rate)
+
+# Plot
+gdp_plot <- ggplot(data_gdp, aes(x=years, y=gdp_growth_rate)) +
+  geom_line(color='blue') +
+  geom_point(color='blue') +
+  ggtitle('GDP Growth Rate in Nigeria (2010-2023)') +
+  xlab('Year') +
+  ylab('GDP Growth Rate (%)') +
+  theme_minimal()
+
+
+# Export Plot as PNG
+plotly::export(gdp_plot, file = "gdp_growth_rate.png")
+
+```
+
+## 
+
+```{r inflation, echo=FALSE}
+# Inflation Rate Data (2010-2023)
+inflation_rate <- c(13.7, 10.8, 12.2, 8.5, 8.1, 9.0, 15.7, 16.5, 12.1, 11.4, 15.8, 16.9, 18.5, 19.1)
+
+# Create Data Frame
+data_inflation <- data.frame(years, inflation_rate)
+
+# Plot
+inflation_plot <- ggplot(data_inflation, aes(x=years, y=inflation_rate)) +
+  geom_line(color='red') +
+  geom_point(color='red') +
+  ggtitle('Inflation Rate in Nigeria (2010-2023)') +
+  xlab('Year') +
+  ylab('Inflation Rate (%)') +
+  theme_minimal()
+
+# Export Plot as PNG
+ggsave("inflation_rate.png", plot = inflation_plot, width = 10, height = 6)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Unemployment rate
+```{r unemployment, echo = FALSE}
+
+# Unemployment Rate Data (2010-2023)
+unemployment_rate <- c(5.1, 6.0, 7.1, 8.2, 9.0, 10.4, 14.2, 18.8, 23.1, 27.1, 33.3, 34.5, 35.7, 37.2)
+
+# Create Data Frame
+data_unemployment <- data.frame(years, unemployment_rate)
+
+# Plot
+unemployment_plot <- ggplot(data_unemployment, aes(x=years, y=unemployment_rate)) +
+  geom_line(color='green') +
+  geom_point(color='green') +
+  ggtitle('Unemployment Rate in Nigeria (2010-2023)') +
+  xlab('Year') +
+  ylab('Unemployment Rate (%)') +
+  theme_minimal()
+
+# Export Plot as PNG
+ggsave("unemployment_rate.png", plot = unemployment_plot, width = 10, height = 6)
+```
+
+
+Poverty rate
+```{r poverty, echo = FALSE}
+
+# Poverty Rate Data (2010-2023)
+poverty_rate <- c(48.4, 46.3, 45.5, 44.6, 43.8, 43.0, 42.4, 42.2, 42.8, 43.5, 44.0, 45.0, 46.1, 47.3)
+
+# Create Data Frame
+data_poverty <- data.frame(years, poverty_rate)
+
+# Plot
+poverty_plot <- ggplot(data_poverty, aes(x=years, y=poverty_rate)) +
+  geom_line(color='purple') +
+  geom_point(color='purple') +
+  ggtitle('Poverty Rate in Nigeria (2010-2023)') +
+  xlab('Year') +
+  ylab('Poverty Rate (%)') +
+  theme_minimal()
+
+# Export Plot as PNG
+ggsave("poverty_rate.png", plot = poverty_plot, width = 10, height = 6)
+```
+
+
+

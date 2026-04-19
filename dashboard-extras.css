@@ -1,0 +1,13 @@
+/* Rounded value boxes (bslib / Quarto dashboard, all pages) */
+.quarto-dashboard .bslib-value-box,
+.bslib-value-box,
+.bslib-value-box.card,
+.bslib-value-box .card,
+.bslib-value-box .value-box-grid {
+  border-radius: 1.15rem !important;
+  overflow: hidden;
+}
+
+.bslib-value-box .card-body {
+  border-radius: inherit;
+}

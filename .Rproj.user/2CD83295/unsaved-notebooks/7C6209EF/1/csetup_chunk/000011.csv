@@ -1,0 +1,85 @@
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0","if(!require(pacman)) install.packages(""pacman"")"
+"0","pacman::p_load(tidyverse,"
+"0","               here, "
+"0","               plotly, "
+"0","               htmltools, "
+"0","               reactable,"
+"0","               ggplot,"
+"0","               weshot)"
+"2","Installing package into ‘C:/Users/ICT-SUPPORT/AppData/Local/R/win-library/4.4’
+(as ‘lib’ is unspecified)
+"
+"2","Warning:"
+"2"," package ‘ggplot’ is not available for this version of R
+
+A version of this package for your version of R might be available elsewhere,
+see the ideas at
+https://cran.r-project.org/doc/manuals/r-patched/R-admin.html#Installing-packages
+"
+"2","Warning:"
+"2"," unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4:
+  cannot open URL 'http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES'
+"
+"2","Warning:"
+"2"," 'BiocManager' not available.  Could not check Bioconductor.
+
+Please use `install.packages('BiocManager')` and then retry.
+"
+"2","Warning in p_install(package, character.only = TRUE, ...) :"
+"2"," 
+"
+"2","Warning in library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :"
+"2","
+ "
+"2"," there is no package called ‘ggplot’
+"
+"2","Installing package into ‘C:/Users/ICT-SUPPORT/AppData/Local/R/win-library/4.4’
+(as ‘lib’ is unspecified)
+"
+"2","Warning:"
+"2"," package ‘weshot’ is not available for this version of R
+
+A version of this package for your version of R might be available elsewhere,
+see the ideas at
+https://cran.r-project.org/doc/manuals/r-patched/R-admin.html#Installing-packages
+"
+"2","Warning:"
+"2"," unable to access index for repository http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4:
+  cannot open URL 'http://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/4.4/PACKAGES'
+"
+"2","Warning:"
+"2"," 'BiocManager' not available.  Could not check Bioconductor.
+
+Please use `install.packages('BiocManager')` and then retry.
+"
+"2","Warning in p_install(package, character.only = TRUE, ...) :"
+"2"," 
+"
+"2","Warning in library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :"
+"2","
+ "
+"2"," there is no package called ‘weshot’
+"
+"2","Warning in pacman::p_load(tidyverse, here, plotly, htmltools, reactable,  :"
+"2","
+ "
+"2"," Failed to install/load:
+ggplot, weshot
+"
+"0","webshot::install_phantomjs()"
+"2","Warning in utils::download.file(url, method = method, ...) :"
+"2","
+ "
+"2"," the 'wininet' method is deprecated for http:// and https:// URLs
+"
+"2","trying URL 'https://github.com/wch/webshot/releases/download/v0.3.1/phantomjs-2.1.1-windows.zip'
+"
+"2","Content type 'application/octet-stream'"
+"2"," length 18193653 bytes (17.4 MB)
+"
+"2","downloaded 17.4 MB
+
+"
+"2","phantomjs has been installed to C:\Users\ICT-SUPPORT\AppData\Roaming\PhantomJS
+"

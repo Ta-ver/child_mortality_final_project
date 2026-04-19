@@ -1,0 +1,148 @@
+# import and clean data
+child_5_year_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born"))
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+here,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+janitor
+)
+# import and clean data
+child_5_year_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born"))
+# import and clean data
+child_5_year_mortality <- read.csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born"))
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+janitor
+)
+# import and clean data
+child_5_year_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born"))
+# import and clean data
+child_5_year_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+head(child_5_year_mortality)
+# import and clean data
+child_5_year_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+head(child_5_year_mortality, 20)
+# import and clean data
+child_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+head(child_5_year_mortality, 20)
+chi
+child_mortality %>%
+select("1960 : 2024")
+child_mortality %>%
+filter("1960 : 2024")
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+dyplr,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+janitor
+)
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+dplyr,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+janitor
+)
+# import and clean data
+child_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+head(child_5_year_mortality, 20)
+child_mortality %>%
+select("1960 | 2024")
+child_mortality %>%
+select('1960 : 2024')
+child_mortality %>%
+select('1960' : '2024')
+# import and clean data
+child_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+head(child_5_year_mortality, 20)
+child_mortality %>%
+select('1960' : '2024')
+child_mortality_clean <- child_mortality %>%
+select('1960' : '2024')
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+dplyr,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactablefmtr,
+janitor
+)
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+dplyr,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+reactablefmtr
+janitor
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+dplyr,
+here,
+readr,
+sf,
+bslib,
+bsicons,
+rnaturalearth,
+plotly,
+countrycode,
+htmltools,
+reactable,
+reactablefmtr,
+janitor
+)

@@ -1,0 +1,113 @@
+---
+title: "erad_poverty"
+author: "T. A."
+date: "2024-07-10"
+output: html_document
+---
+
+packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+               here, 
+               plotly, 
+               htmltools, 
+               reactable,
+               ggplot,
+               weshot)
+
+webshot::install_phantomjs()
+```
+
+![Poverty Trends in Nigeria](https://example.com/poverty_trends.png)
+
+```{r cars}
+
+# Data for primary school enrolment
+years <- 2000:2015
+enrolment_rate <- c(68, 71, 74, 76, 78, 80, 82, 84, 85, 87, 88, 89, 90, 91, 92, 93)
+
+# Create Data Frame
+data_education <- data.frame(years, enrolment_rate)
+
+# Plot
+education_plot <- plot_ly(data_education, x = ~years, y = ~enrolment_rate, type = 'scatter', mode = 'lines+markers', 
+                          line = list(color = 'blue')) %>%
+  layout(title = 'Primary School Enrolment Rate in Nigeria (2000-2015)',
+         xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Enrolment Rate (%)'))
+
+htmlwidgets::saveWidget(as_widget(education_plot), "enrolment_rate.html")
+webshot2::webshot("enrolment_rate.html", file = "enrolment_rate.png")
+
+```
+
+## 
+
+```{r 5_mortality rate, echo=FALSE}
+
+# Data for under-five mortality rate
+years <- 2000:2015
+mortality_rate <- c(201, 194, 187, 180, 173, 166, 159, 152, 145, 138, 131, 124, 117, 120, 123, 126)
+
+# Create Data Frame
+data_mortality <- data.frame(years, mortality_rate)
+
+# Plot
+mortality_plot <- plot_ly(data_mortality, x = ~years, y = ~mortality_rate, type = 'scatter', mode = 'lines+markers', 
+                          line = list(color = 'red')) %>%
+  layout(title = 'Under-Five Mortality Rate in Nigeria (2000-2015)',
+         xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Mortality Rate (per 1,000 live births)'))
+
+htmlwidgets::saveWidget(as_widget(mortality_plot), "mortality_rate.html")
+webshot2::webshot("mortality_rate.html", file = "mortality_rate.png")
+
+```
+N-power
+```{r n-power}
+# Data for N-Power beneficiaries
+years <- 2016:2023
+beneficiaries <- c(200000, 300000, 500000, 500000, 500000, 500000, 750000, 1000000)
+
+# Create Data Frame
+data_npower <- data.frame(years, beneficiaries)
+
+# Plot
+npower_plot <- plot_ly(data_npower, x = ~years, y = ~beneficiaries, type = 'scatter', mode = 'lines+markers', 
+                       line = list(color = 'blue')) %>%
+  layout(title = 'N-Power Beneficiaries (2016-2023)',
+         xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Number of Beneficiaries'))
+
+htmlwidgets::saveWidget(as_widget(npower_plot), "npower_beneficiaries.html")
+webshot2::webshot("npower_beneficiaries.html", file = "npower_beneficiaries.png")
+
+
+```
+
+CCT
+```{r}
+# Data for CCT beneficiaries
+years <- 2016:2023
+cct_beneficiaries <- c(50000, 100000, 200000, 300000, 400000, 500000, 750000, 1000000)
+
+# Create Data Frame
+data_cct <- data.frame(years, cct_beneficiaries)
+
+# Plot
+cct_plot <- plot_ly(data_cct, x = ~years, y = ~cct_beneficiaries, type = 'scatter', mode = 'lines+markers', 
+                    line = list(color = 'green')) %>%
+  layout(title = 'CCT Beneficiaries (2016-2023)',
+         xaxis = list(title = 'Year'),
+         yaxis = list(title = 'Number of Beneficiaries'))
+
+htmlwidgets::saveWidget(as_widget(cct_plot), "cct_beneficiaries.html")
+webshot2::webshot("cct_beneficiaries.html", file = "cct_beneficiaries.png")
+
+```
+
+
+

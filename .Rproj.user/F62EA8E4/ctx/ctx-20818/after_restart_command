@@ -1,0 +1,2 @@
+@install.packages(c("backports", "cli", "countrycode", "cpp11", "dplyr", "furrr", "geodata", "geosphere", "igraph", "lazyeval", "magrittr", "maplegend", "openssl", "pkgload", "processx", "progressr", "ps", "purrr", "Rcpp", "rex", "rlang", "S7", "spatstat", "spatstat.linnet", "spatstat.model", "V8", "vctrs", "vroom"))
+install.packages(c("nlme", "rpart"))

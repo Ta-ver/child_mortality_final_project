@@ -1,0 +1,96 @@
+---
+title: "GAPMINDER | GLOBAL CHILD (AGE 5) MORTALITY 1960 - 2024"
+author: "Tavershima Adongo"
+format: 
+  dashboard:
+    logo: images/LOGO_IMAGE.png
+    nav-buttons: [github]
+    github: https://github.com/YOUR_URL
+theme: lux
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+# load packages
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(tidyverse,
+               dplyr,
+               here,
+               readr,
+               sf,
+               bslib, 
+               bsicons,
+               rnaturalearth, 
+               plotly, 
+               countrycode, 
+               htmltools, 
+               reactable,
+               janitor
+               )
+```
+
+
+```{r}
+# import and clean data
+child_mortality <- read_csv(here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"))
+
+# head(child_5_year_mortality, 20)
+
+child_mortality_clean <- child_mortality %>%
+  select('1960' : '2024')
+  
+
+```
+
+
+# HOME
+
+##
+
+###
+```{r}
+plot(cars)
+```
+
+###
+```{r}
+plot(cars)
+```
+
+###
+```{r}
+plot(cars)
+```
+
+
+##
+
+###
+```{r}
+plot(cars)
+```
+
+###
+```{r}
+plot(cars)
+```
+
+##
+```{r}
+plot(cars)
+```
+
+
+# DOWNLOAD
+
+```{r}
+
+```
+
+
+
+# ABOUT
+
