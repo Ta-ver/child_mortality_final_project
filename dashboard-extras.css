@@ -11,3 +11,20 @@
 .bslib-value-box .card-body {
   border-radius: inherit;
 }
+
+/*
+ * Chart / data cards use bslib `.card.bslib-card` chrome; rounding the inner
+ * Plotly div does not affect that border. Match value-box corner radius here.
+ */
+.quarto-dashboard .bslib-card.card:has(.plotly.html-widget),
+.quarto-dashboard .bslib-card.card:has(.reactable.html-widget),
+.quarto-dashboard .bslib-card.card.tabset:has(.tab-content) {
+  border-radius: 1.15rem !important;
+  overflow: hidden !important;
+}
+
+.quarto-dashboard .bslib-card.card:has(.plotly.html-widget) .plotly.html-widget,
+.quarto-dashboard .bslib-card.card:has(.reactable.html-widget) .reactable.html-widget {
+  border-radius: inherit;
+  overflow: hidden;
+}
