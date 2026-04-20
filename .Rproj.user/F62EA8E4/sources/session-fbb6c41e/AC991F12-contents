@@ -1,0 +1,901 @@
+---
+title: "GAPMINDER | Child Mortality, GDP per Capita, and Average Daily Income (1960–2026)"
+author: ""
+format:
+  dashboard:
+    output-file: index.html
+    nav-buttons: [github]
+    github: https://github.com/Ta-ver/child_mortality_final_project
+    theme: yeti
+    embed-resources: true
+    css: dashboard-extras.css
+resources:
+  - data
+  - dashboard-extras.css
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| include: false
+
+# Load packages
+if (!requireNamespace("pacman", quietly = TRUE)) {
+  install.packages("pacman", repos = "https://cloud.r-project.org")
+}
+
+pacman::p_load(
+  tidyverse,
+  here,
+  readr,
+  plotly,
+  reactable,
+  htmltools,
+  scales,
+  sf,
+  bslib,
+  bsicons,
+  rnaturalearth,
+  rnaturalearthdata,
+  countrycode
+)
+
+year_min <- 1960L
+year_max <- 2026L
+year_cols <- as.character(year_min:year_max)
+
+child_raw <- read_csv(
+  here::here("data/child_mortality_0_5_year_olds_dying_per_1000_born.csv"),
+  show_col_types = FALSE
+)
+
+gdp_raw <- read_csv(here::here("data/gdp_pcap.csv"), show_col_types = FALSE)
+
+inc_raw <- read_csv(here::here("data/mincpcap_cppp.csv"), show_col_types = FALSE)
+
+# Keep 1960–2026 year columns present in each file (intersect avoids missing-column errors)
+pick_years <- function(df, id_cols) {
+  have <- intersect(year_cols, names(df))
+  df |> dplyr::select(all_of(c(id_cols, have)))
+}
+
+# Long format: one row per country-year (`pivot_longer`, `mutate`, `rename`)
+child <- pick_years(child_raw, "country") |>
+  pivot_longer(-country, names_to = "year", values_to = "child_mortality") |>
+  mutate(
+    year = as.integer(year),
+    child_mortality = suppressWarnings(as.numeric(child_mortality))
+  )
+
+gdp <- pick_years(gdp_raw, c("geo", "name")) |>
+  dplyr::select(-geo) |>
+  rename(country = name) |>
+  pivot_longer(-country, names_to = "year", values_to = "gdp_per_capita") |>
+  mutate(
+    year = as.integer(year),
+    gdp_per_capita = suppressWarnings(as.numeric(gdp_per_capita))
+  )
+
+inc <- pick_years(inc_raw, c("geo", "name")) |>
+  dplyr::select(-geo) |>
+  rename(country = name) |>
+  pivot_longer(-country, names_to = "year", values_to = "avg_daily_income_ppp") |>
+  mutate(
+    year = as.integer(year),
+    avg_daily_income_ppp = suppressWarnings(as.numeric(avg_daily_income_ppp))
+  )
+
+# `inner_join`: only country-years present in all three indicators (Gapminder-style alignment)
+panel <- child |>
+  inner_join(gdp, by = c("country", "year")) |>
+  inner_join(inc, by = c("country", "year")) |>
+  distinct(country, year, .keep_all = TRUE) |>
+  filter(
+    if_all(
+      c(child_mortality, gdp_per_capita, avg_daily_income_ppp),
+      is.finite
+    )
+  )
+
+global_means <- panel |>
+  group_by(year) |>
+  summarise(
+    child_mortality = mean(child_mortality, na.rm = TRUE),
+    gdp_per_capita = mean(gdp_per_capita, na.rm = TRUE),
+    avg_daily_income_ppp = mean(avg_daily_income_ppp, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+snapshot_year <- panel |>
+  filter(
+    year <= 2026L,
+    !is.na(child_mortality),
+    !is.na(gdp_per_capita),
+    !is.na(avg_daily_income_ppp)
+  ) |>
+  group_by(year) |>
+  summarise(n_countries = n(), .groups = "drop") |>
+  filter(n_countries >= 150) |>
+  slice_max(year, n = 1) |>
+  pull(year)
+
+snap <- panel |>
+  filter(year == snapshot_year)
+
+fmt_dollars <- label_dollar(accuracy = 1, big.mark = ",")
+
+# Headline values (child mortality)
+mean_child_mort <- mean(snap$child_mortality, na.rm = TRUE)
+n_snap_countries <- n_distinct(snap$country)
+
+highest_child_mort_country <- snap |>
+  arrange(desc(child_mortality)) |>
+  slice_head(n = 1) |>
+  pull(country)
+
+highest_child_mort_value <- snap |>
+  arrange(desc(child_mortality)) |>
+  slice_head(n = 1) |>
+  pull(child_mortality) |>
+  round(1)
+
+lowest_child_mort_country <- snap |>
+  arrange(child_mortality) |>
+  slice_head(n = 1) |>
+  pull(country)
+
+lowest_child_mort_value <- snap |>
+  arrange(child_mortality) |>
+  slice_head(n = 1) |>
+  pull(child_mortality) |>
+  round(1)
+
+# Headline values (GDP per capita)
+mean_gdp_cap <- mean(snap$gdp_per_capita, na.rm = TRUE)
+highest_gdp_country <- snap |>
+  arrange(desc(gdp_per_capita)) |>
+  slice_head(n = 1) |>
+  pull(country)
+highest_gdp_value <- snap |>
+  arrange(desc(gdp_per_capita)) |>
+  slice_head(n = 1) |>
+  pull(gdp_per_capita)
+lowest_gdp_country <- snap |>
+  arrange(gdp_per_capita) |>
+  slice_head(n = 1) |>
+  pull(country)
+lowest_gdp_value <- snap |>
+  arrange(gdp_per_capita) |>
+  slice_head(n = 1) |>
+  pull(gdp_per_capita)
+
+# Headline values (average daily income)
+mean_income_day <- mean(snap$avg_daily_income_ppp, na.rm = TRUE)
+highest_income_country <- snap |>
+  arrange(desc(avg_daily_income_ppp)) |>
+  slice_head(n = 1) |>
+  pull(country)
+highest_income_value <- snap |>
+  arrange(desc(avg_daily_income_ppp)) |>
+  slice_head(n = 1) |>
+  pull(avg_daily_income_ppp) |>
+  round(2)
+lowest_income_country <- snap |>
+  arrange(avg_daily_income_ppp) |>
+  slice_head(n = 1) |>
+  pull(country)
+lowest_income_value <- snap |>
+  arrange(avg_daily_income_ppp) |>
+  slice_head(n = 1) |>
+  pull(avg_daily_income_ppp) |>
+  round(2)
+```
+
+```{r}
+#| include: false
+
+# World map + top countries chart (child mortality snapshot year)
+country_shapes <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+snap_geo <- snap |>
+  mutate(
+    country_code = countrycode::countrycode(
+      country,
+      origin = "country.name",
+      destination = "iso3c",
+      warn = FALSE
+    )
+  )
+
+child_sf_map <- dplyr::left_join(
+  country_shapes,
+  snap_geo,
+  by = c("adm0_a3" = "country_code")
+) |>
+  mutate(
+    map_label = dplyr::coalesce(country, admin)
+  )
+
+child_mort_map_gg <- ggplot(child_sf_map) +
+  geom_sf(
+    aes(
+      fill = child_mortality,
+      text = paste0(map_label, ": ", round(child_mortality, 1), " / 1,000")
+    )
+  ) +
+  scale_fill_gradientn(
+    colours = c(
+      "#0ea5e9",
+      "#22d3ee",
+      "#a5f3fc",
+      "#fde047",
+      "#fb923c",
+      "#f43f5e"
+    ),
+    name = "Deaths\nper 1,000",
+    na.value = "#e2e8f0"
+  ) +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+child_mort_map_plotly <- ggplotly(child_mort_map_gg, tooltip = "text")
+
+gap_15_child <- snap |>
+  arrange(desc(child_mortality)) |>
+  slice_head(n = 15) |>
+  mutate(
+    tooltip_label = paste0(country, ": ", round(child_mortality, 1), " / 1,000")
+  )
+
+top_15_child_mort_gg <- ggplot(
+  gap_15_child,
+  aes(
+    y = reorder(country, child_mortality),
+    x = child_mortality,
+    fill = child_mortality,
+    text = tooltip_label
+  )
+) +
+  geom_col() +
+  labs(x = "Under-5 deaths per 1,000 live births", y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+top_15_child_mort_ggplotly <- ggplotly(top_15_child_mort_gg, tooltip = "text")
+```
+
+# **Child Mortality**
+
+## Row 1 {height="30%"}
+
+```{r}
+value_box(
+  title = "Highest child mortality",
+  value = paste0(highest_child_mort_value, " /1k"),
+  showcase = bsicons::bs_icon("graph-up-arrow"),
+  theme = value_box_theme(bg = "#e74c3c"),
+  p(paste0("(", highest_child_mort_country, ")"))
+)
+```
+
+```{r}
+value_box(
+  title = "Lowest child mortality",
+  value = paste0(lowest_child_mort_value, " /1k"),
+  showcase = bsicons::bs_icon("graph-down-arrow"),
+  theme = value_box_theme(bg = "#27ae60"),
+  p(paste0("(", lowest_child_mort_country, ")"))
+)
+```
+
+```{r}
+value_box(
+  title = paste0("Mean child mortality (", snapshot_year, ")"),
+  value = paste0(round(mean_child_mort, 1), " /1k"),
+  showcase = bsicons::bs_icon("heart-pulse"),
+  theme = value_box_theme(bg = "#c0392b"),
+  p(paste0("(", n_snap_countries, " countries; deaths per 1,000 born)"))
+)
+```
+
+## Row 2 {height="70%"}
+
+###  {width="65%"}
+
+```{r}
+cat("title=", paste0("World map: under-5 mortality (", snapshot_year, ")"))
+child_mort_map_plotly
+```
+
+###  {.tabset}
+
+#### Top 15 Countries CMR
+
+```{r}
+cat("title=", paste0("Top 15 countries (", snapshot_year, ")"))
+top_15_child_mort_ggplotly
+```
+
+#### Global Average Trend
+
+```{r}
+#| title: "Global average trend (simple mean across countries)"
+
+p_cm_global <- global_means |>
+  plot_ly(
+    x = ~year,
+    y = ~child_mortality,
+    type = "scatter",
+    mode = "lines",
+    line = list(color = "#c0392b", width = 3),
+    hovertemplate = "Year: %{x}<br>Mean: %{y:.1f} deaths / 1,000<extra></extra>"
+  ) |>
+  layout(
+    title = list(text = "Mean child mortality over time (unweighted country average)", font = list(size = 13)),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Mean under-5 deaths per 1,000 live births"),
+    margin = list(l = 60, r = 20, t = 48, b = 50)
+  )
+
+p_cm_global
+```
+
+#### Distribution
+
+```{r}
+plot_ly(
+  snap,
+  x = ~child_mortality,
+  type = "histogram",
+  nbinsx = 35,
+  marker = list(color = "#c0392b", line = list(color = "white", width = 0.5)),
+  hovertemplate = "Bin center: %{x}<br>Number of countries: %{y}<extra></extra>"
+) |>
+  layout(
+    title = list(text = paste0("Distribution of child mortality (", snapshot_year, ")"), font = list(size = 13)),
+    xaxis = list(title = "Under-5 deaths per 1,000 live births"),
+    yaxis = list(title = "Number of countries"),
+    margin = list(l = 60, r = 20, t = 48, b = 50)
+  )
+```
+
+# **GDP per Capita**
+
+## Row 1 {height="30%"}
+
+###  {width="38%"}
+
+```{r}
+value_box(
+  title = "Highest GDP per capita",
+  value = fmt_dollars(highest_gdp_value),
+  showcase = bsicons::bs_icon("graph-up-arrow"),
+  theme = value_box_theme(bg = "#2980b9"),
+  p(paste0("(", highest_gdp_country, ")"))
+)
+```
+
+###  {width="31%"}
+
+```{r}
+value_box(
+  title = "Lowest GDP per capita",
+  value = fmt_dollars(lowest_gdp_value),
+  showcase = bsicons::bs_icon("graph-down-arrow"),
+  theme = value_box_theme(bg = "#7f8c8d"),
+  p(paste0("(", lowest_gdp_country, ")"))
+)
+```
+
+###  {width="31%"}
+
+```{r}
+value_box(
+  title = paste0("Mean GDP per capita (", snapshot_year, ")"),
+  value = fmt_dollars(mean_gdp_cap),
+  showcase = bsicons::bs_icon("currency-dollar"),
+  theme = value_box_theme(bg = "#3498db"),
+  p("PPP international dollars")
+)
+```
+
+## Row 2 {height="70%"}
+
+###  {width="60%"}
+
+```{r}
+#| title: "Global average GDP per capita (PPP)"
+
+p_gdp_global <- global_means |>
+  plot_ly(x = ~year, y = ~gdp_per_capita, type = "scatter", mode = "lines",
+          line = list(color = "#2980b9", width = 3),
+          hovertemplate = "Year: %{x}<br>Mean GDP/cap: $%{y:,.0f}<extra></extra>") |>
+  layout(
+    title = list(text = "Mean GDP per capita over time (unweighted country average)", font = list(size = 13)),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Mean GDP per capita (PPP international $)"),
+    margin = list(l = 70, r = 20, t = 48, b = 50)
+  )
+
+p_gdp_global
+```
+
+###  {.tabset}
+
+#### Top 15 economies
+
+```{r}
+top15_g <- snap |>
+  slice_max(gdp_per_capita, n = 15, with_ties = FALSE) |>
+  mutate(country = fct_reorder(country, gdp_per_capita))
+
+plot_ly(
+  top15_g,
+  x = ~gdp_per_capita,
+  y = ~country,
+  type = "bar",
+  orientation = "h",
+  marker = list(color = "#2980b9"),
+  hovertemplate = "%{y}<br>GDP per capita: $%{x:,.0f}<extra></extra>"
+) |>
+  layout(
+    title = list(text = paste0("Top 15 economies by GDP per capita (", snapshot_year, ")"), font = list(size = 13)),
+    xaxis = list(title = "GDP per capita (PPP international $)"),
+    yaxis = list(title = "", categoryorder = "total ascending"),
+    margin = list(l = 140, r = 20, t = 48, b = 50)
+  )
+```
+
+#### Distribution
+
+```{r}
+plot_ly(
+  snap,
+  x = ~gdp_per_capita,
+  type = "histogram",
+  nbinsx = 40,
+  marker = list(color = "#2980b9", line = list(color = "white", width = 0.5)),
+  hovertemplate = "Bin center: $%{x}<br>Number of countries: %{y}<extra></extra>"
+) |>
+  layout(
+    title = list(text = paste0("Distribution of GDP per capita (", snapshot_year, ")"), font = list(size = 13)),
+    xaxis = list(title = "GDP per capita (PPP $)"),
+    yaxis = list(title = "Number of countries"),
+    margin = list(l = 60, r = 20, t = 48, b = 50)
+  )
+```
+
+# **Average Daily Income**
+
+## Row 1 {height="35%"}
+
+```{r}
+value_box(
+  title = "Highest average daily income",
+  value = paste0("$", highest_income_value),
+  showcase = bsicons::bs_icon("graph-up-arrow"),
+  theme = value_box_theme(bg = "#16a085"),
+  p(paste0("(", highest_income_country, ")"))
+)
+```
+
+```{r}
+value_box(
+  title = "Lowest average daily income",
+  value = paste0("$", lowest_income_value),
+  showcase = bsicons::bs_icon("graph-down-arrow"),
+  theme = value_box_theme(bg = "#f39c12"),
+  p(paste0("(", lowest_income_country, ")"))
+)
+```
+
+```{r}
+value_box(
+  title = paste0("Mean income per day (", snapshot_year, ")"),
+  value = paste0("$", round(mean_income_day, 1)),
+  showcase = bsicons::bs_icon("cash-stack"),
+  theme = value_box_theme(bg = "#1abc9c"),
+  p("PPP dollars per day")
+)
+```
+
+## Row 2
+
+###  {width="60%"}
+
+```{r}
+#| title: "Global average daily income (PPP $ / day)"
+
+p_inc_global <- global_means |>
+  plot_ly(
+    x = ~year,
+    y = ~avg_daily_income_ppp,
+    type = "scatter",
+    mode = "lines",
+    line = list(color = "#16a085", width = 3),
+    hovertemplate = "Year: %{x}<br>Mean income: $%{y:.2f} / day<extra></extra>"
+  ) |>
+  layout(
+    title = list(text = "Mean daily income over time (unweighted country average)", font = list(size = 13)),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Mean PPP dollars per day"),
+    margin = list(l = 60, r = 20, t = 48, b = 50)
+  )
+
+p_inc_global
+```
+
+###  {.tabset}
+
+#### Top 10 vs Lowest 10 countries
+
+```{r}
+# Top 10 and lowest 10 by PPP $/day (snapshot year), IMR-style dual strip
+income_low10 <- snap |>
+  slice_min(avg_daily_income_ppp, n = 10, with_ties = FALSE) |>
+  arrange(avg_daily_income_ppp) |>
+  mutate(
+    band = "Lowest 10",
+    y_label = paste0(country, " (", round(avg_daily_income_ppp, 2), " $/day)")
+  )
+
+income_top10 <- snap |>
+  slice_max(avg_daily_income_ppp, n = 10, with_ties = FALSE) |>
+  arrange(avg_daily_income_ppp) |>
+  mutate(
+    band = "Top 10",
+    y_label = paste0(country, " (", round(avg_daily_income_ppp, 2), " $/day)")
+  )
+
+income_compare <- dplyr::bind_rows(income_low10, income_top10) |>
+  mutate(
+    y_label = forcats::fct_inorder(y_label),
+    hover_txt = paste0(
+      country, "<br>",
+      band, "<br>",
+      "PPP income: $", round(avg_daily_income_ppp, 2), " / day"
+    )
+  )
+
+y_levels <- levels(income_compare$y_label)
+
+plot_ly(
+  income_compare,
+  x = ~avg_daily_income_ppp,
+  y = ~y_label,
+  color = ~band,
+  colors = c("Top 10" = "#0d9488", "Lowest 10" = "#ea580c"),
+  type = "bar",
+  orientation = "h",
+  text = ~hover_txt,
+  hoverinfo = "text"
+) |>
+  layout(
+    title = list(
+      text = paste0("Top 10 vs lowest 10 by daily income (", snapshot_year, ")"),
+      font = list(size = 13)
+    ),
+    xaxis = list(title = "Average daily income (PPP $ per day)"),
+    yaxis = list(
+      title = "",
+      categoryorder = "array",
+      categoryarray = y_levels
+    ),
+    legend = list(title = "", orientation = "h", x = 0, y = 1.08),
+    margin = list(l = 24, r = 24, t = 56, b = 48)
+  ) |>
+  config(displayModeBar = TRUE, displaylogo = FALSE)
+```
+
+#### Distribution
+
+```{r}
+plot_ly(
+  snap,
+  x = ~avg_daily_income_ppp,
+  type = "histogram",
+  nbinsx = 40,
+  marker = list(color = "#16a085", line = list(color = "white", width = 0.5)),
+  hovertemplate = "Bin center: $%{x}<br>Number of countries: %{y}<extra></extra>"
+) |>
+  layout(
+    title = list(text = paste0("Distribution of daily income (", snapshot_year, ")"), font = list(size = 13)),
+    xaxis = list(title = "PPP dollars per day"),
+    yaxis = list(title = "Number of countries"),
+    margin = list(l = 60, r = 20, t = 48, b = 50)
+  )
+```
+
+# **Cross-indicator Views**
+
+## Row 1 {height="420px"}
+
+### {width=50%}
+
+::: {.card title="Key Takeaways"}
+-   **Wealth vs. survival:** Countries with higher log GDP per capita or higher daily income usually show **lower** under-5 mortality, but the cloud is wide—policy, inequality, and conflict matter beyond averages.
+-   **GDP deciles:** Mean child mortality **falls** from the lowest to the highest GDP decile at the snapshot year, while mean income rises with the same grouping - purely descriptive aggregation.
+-   **Global lines:** The three series scaled to their own maxima show **parallel long-run movement**: GDP and income rise while mean child mortality falls (unweighted country means each year).
+:::
+
+### {width=50%}
+
+```{r}
+cat("title=", paste0("Interactive Country Table (", snapshot_year, ")"))
+
+reactable::reactable(
+  snap |>
+    dplyr::select(country, child_mortality, gdp_per_capita, avg_daily_income_ppp) |>
+    dplyr::arrange(dplyr::desc(gdp_per_capita)),
+  searchable = TRUE,
+  striped = TRUE,
+  highlight = TRUE,
+  defaultPageSize = 12,
+  columns = list(
+    country = reactable::colDef(name = "Country", minWidth = 140),
+    child_mortality = reactable::colDef(
+      name = "Child mortality (/1k)",
+      format = reactable::colFormat(digits = 1)
+    ),
+    gdp_per_capita = reactable::colDef(
+      name = "GDP per capita (PPP $)",
+      format = reactable::colFormat(digits = 0)
+    ),
+    avg_daily_income_ppp = reactable::colDef(
+      name = "Daily income ($/day)",
+      format = reactable::colFormat(digits = 2)
+    )
+  )
+)
+```
+
+## Row {height="480px"}
+
+```{r}
+#| title: "Wealth vs Child survival"
+
+b <- snap |>
+  mutate(
+    log_gdp = log10(pmax(gdp_per_capita, 1)),
+    text = paste0(
+      country, "<br>",
+      "Mortality: ", round(child_mortality, 1), " / 1,000<br>",
+      "GDP/cap: ", fmt_dollars(gdp_per_capita), "<br>",
+      "Income: $", round(avg_daily_income_ppp, 2), " / day"
+    )
+  )
+
+plot_ly(
+  b,
+  x = ~log_gdp,
+  y = ~child_mortality,
+  size = ~avg_daily_income_ppp,
+  color = ~avg_daily_income_ppp,
+  text = ~text,
+  type = "scatter",
+  mode = "markers",
+  marker = list(sizemode = "diameter", sizeref = 0.15, line = list(width = 0.4, color = "white")),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = list(
+      text = paste0("log10(GDP per capita) vs child mortality (", snapshot_year, ")"),
+      font = list(size = 14)
+    ),
+    xaxis = list(title = "log10(GDP per capita, PPP $)"),
+    yaxis = list(title = "Under-5 deaths per 1,000 live births"),
+    margin = list(l = 70, r = 20, t = 56, b = 50),
+    showlegend = TRUE
+  ) |>
+  colorbar(title = "PPP $<br>per day")
+```
+
+## Row {height="480px"}
+
+### Daily income vs Mortality
+
+```{r}
+b2 <- snap |>
+  mutate(
+    text = paste0(
+      country, "<br>",
+      "Income: $", round(avg_daily_income_ppp, 2), " / day<br>",
+      "Mortality: ", round(child_mortality, 1), " / 1,000"
+    )
+  )
+
+plot_ly(
+  b2,
+  x = ~avg_daily_income_ppp,
+  y = ~child_mortality,
+  color = ~gdp_per_capita,
+  text = ~text,
+  type = "scatter",
+  mode = "markers",
+  marker = list(size = 10, line = list(width = 0.3, color = "white")),
+  hoverinfo = "text"
+) |>
+  layout(
+    title = list(
+      text = paste0("Daily income vs child mortality (", snapshot_year, ")"),
+      font = list(size = 14)
+    ),
+    xaxis = list(title = "Average daily income (PPP $ per day)"),
+    yaxis = list(title = "Under-5 deaths per 1,000 live births"),
+    margin = list(l = 70, r = 20, t = 56, b = 50)
+  ) |>
+  colorbar(title = "GDP/cap<br>PPP $")
+```
+
+### Child mortality by GDP decile
+
+```{r}
+dec <- snap |>
+  filter(!is.na(gdp_per_capita)) |>
+  mutate(decile = ntile(gdp_per_capita, 10)) |>
+  group_by(decile) |>
+  summarise(
+    child_mortality = mean(child_mortality, na.rm = TRUE),
+    avg_daily_income_ppp = mean(avg_daily_income_ppp, na.rm = TRUE),
+    gdp_per_capita = mean(gdp_per_capita, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+plot_ly(
+  dec,
+  x = ~decile,
+  y = ~child_mortality,
+  type = "bar",
+  marker = list(color = "#c0392b"),
+  hovertemplate = "Decile %{x}<br>Mean deaths / 1,000: %{y:.1f}<extra></extra>"
+) |>
+  layout(
+    title = list(
+      text = paste0("Mean child mortality by GDP decile (", snapshot_year, ")"),
+      font = list(size = 13)
+    ),
+    xaxis = list(title = "GDP per capita decile (1 = lowest, 10 = highest)", dtick = 1),
+    yaxis = list(title = "Mean under-5 deaths per 1,000 live births", rangemode = "tozero"),
+    margin = list(l = 70, r = 20, t = 48, b = 50)
+  )
+```
+
+### Mean GDP per capita by decile
+
+```{r}
+plot_ly(
+  dec,
+  x = ~decile,
+  y = ~gdp_per_capita,
+  type = "bar",
+  marker = list(color = "#2980b9"),
+  hovertemplate = "Decile %{x}<br>Mean GDP/cap: $%{y:,.0f}<extra></extra>"
+) |>
+  layout(
+    title = list(
+      text = paste0("Mean GDP per capita by decile (", snapshot_year, ")"),
+      font = list(size = 13)
+    ),
+    xaxis = list(title = "GDP per capita decile (1 = lowest)", dtick = 1),
+    yaxis = list(title = "Mean GDP per capita (PPP $)", rangemode = "tozero"),
+    margin = list(l = 70, r = 20, t = 48, b = 50)
+  )
+```
+
+### Mean daily income by decile
+
+```{r}
+plot_ly(
+  dec,
+  x = ~decile,
+  y = ~avg_daily_income_ppp,
+  type = "bar",
+  marker = list(color = "#16a085"),
+  hovertemplate = "Decile %{x}<br>Mean income: $%{y:.2f} / day<extra></extra>"
+) |>
+  layout(
+    title = list(
+      text = paste0("Mean daily income by GDP decile (", snapshot_year, ")"),
+      font = list(size = 13)
+    ),
+    xaxis = list(title = "GDP per capita decile (1 = lowest)", dtick = 1),
+    yaxis = list(title = "Mean PPP dollars per day", rangemode = "tozero"),
+    margin = list(l = 70, r = 20, t = 48, b = 50)
+  )
+```
+
+## Row {height="520px"}
+
+```{r}
+#| title: "How three global averages moved together"
+
+p3 <- global_means |>
+  pivot_longer(
+    c(child_mortality, gdp_per_capita, avg_daily_income_ppp),
+    names_to = "indicator",
+    values_to = "value"
+  ) |>
+  mutate(
+    indicator = recode(
+      indicator,
+      child_mortality = "Child mortality (/1,000)",
+      gdp_per_capita = "GDP per capita (PPP $)",
+      avg_daily_income_ppp = "Avg daily income ($/day)"
+    )
+  ) |>
+  group_by(indicator) |>
+  mutate(
+    value_scaled = value / max(value, na.rm = TRUE),
+    htext = paste0(indicator, "<br>Year: ", year, "<br>Scaled to series max: ", round(value_scaled, 3))
+  ) |>
+  ungroup()
+
+plot_ly(
+  p3,
+  x = ~year,
+  y = ~value_scaled,
+  color = ~indicator,
+  text = ~htext,
+  type = "scatter",
+  mode = "lines",
+  hovertemplate = "%{text}<extra></extra>"
+) |>
+  layout(
+    title = list(
+      text = "Global averages: each series scaled to its own maximum (= 1)",
+      font = list(size = 14)
+    ),
+    xaxis = list(title = "Year"),
+    yaxis = list(title = "Scaled level (1 = series peak)", rangemode = "tozero"),
+    legend = list(orientation = "h", x = 0, y = -0.25),
+    margin = list(l = 70, r = 20, t = 56, b = 80)
+  )
+```
+
+# Download
+
+Below is the link to download the CSV files used in this dashboard.
+
+```{r}
+#| title: "Dataset downloads"
+
+tags$div(
+  class = "card card-body bg-light",
+  tags$h5(class = "card-title", "Dataset downloads"),
+  tags$ul(
+    tags$li(HTML(paste0(
+      '<a href="data/child_mortality_0_5_year_olds_dying_per_1000_born.csv" download>child_mortality_0_5_year_olds_dying_per_1000_born.csv</a> - ',
+      "under-5 deaths per 1,000 live births by country and year."
+    ))),
+    tags$li(HTML(paste0(
+      '<a href="data/gdp_pcap.csv" download>gdp_pcap.csv</a> - ',
+      "GDP per capita in international dollars (PPP), inflation-adjusted."
+    ))),
+    tags$li(HTML(paste0(
+      '<a href="data/mincpcap_cppp.csv" download>mincpcap_cppp.csv</a> - ',
+      "average daily income in PPP dollars per day."
+    )))
+  ),
+  tags$p(
+    class = "text-muted small mb-0")
+)
+```
+
+# About
+
+This dashboard, created by Tavershima Adongo, uses harmonised country-year observations from the three indicators below:
+
+**Child mortality (0–5)** counts how many children die before their fifth birthday per 1,000 live births - lower values mean better child survival.
+
+**GDP per capita** summarises average economic output per person in a year, expressed in purchasing-power-parity (PPP) international dollars so comparisons across countries are less distorted by market exchange rates.
+
+**Average daily income** (also PPP) describes typical material living standards in dollars per day; it moves with productivity and distribution, not only with GDP.
+
+Comparing these indicators matters because wealth and income are strongly associated with nutrition, sanitation, health systems, and maternal education - all of which shape child survival. The relationship is not perfectly deterministic: policy choices, inequality, conflict, and measurement differences create scatter around any trend. Still, viewing **child mortality**, **GDP per capita**, and **average daily income** together highlights how economic resources map (imperfectly) onto human outcomes, and how global progress over 1960 - 2026 has unfolded in parallel across these dimensions.
+
+**Note on averages:** line charts labelled “global average” use a **simple mean across countries** in each year (each country weighted equally), not a population-weighted world average.
+
+**Cross-indicator page:** deciles split countries at a single snapshot year (`r snapshot_year`) by GDP per capita. A small number of economies appear in the mortality file but not in the GDP/income tables; those rows are excluded from merged views.
+
