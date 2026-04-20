@@ -9,6 +9,22 @@ format:
     theme: yeti
     embed-resources: true
     css: dashboard-extras.css
+    include-in-header:
+      - text: |
+          <style>
+          /* Rounded plot / table cards (bslib chrome). Value boxes: dashboard-extras.css */
+          .quarto-dashboard .bslib-card.card:has(.plotly.html-widget),
+          .quarto-dashboard .bslib-card.card:has(.reactable.html-widget),
+          .quarto-dashboard .bslib-card.card.tabset:has(.tab-content) {
+            border-radius: 1.15rem !important;
+            overflow: hidden !important;
+          }
+          .quarto-dashboard .bslib-card.card:has(.plotly.html-widget) .plotly.html-widget,
+          .quarto-dashboard .bslib-card.card:has(.reactable.html-widget) .reactable.html-widget {
+            border-radius: inherit;
+            overflow: hidden;
+          }
+          </style>
 resources:
   - data
   - dashboard-extras.css
