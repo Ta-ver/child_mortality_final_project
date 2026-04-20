@@ -672,40 +672,89 @@ reactable::reactable(
 ```{r}
 #| title: "Wealth vs Child survival"
 
-b <- snap |>
+continent_lvls <- c("Africa", "Americas", "Asia", "Europe", "Oceania", "Unknown")
+continent_cols <- c(
+  "Africa" = "#c0392b",
+  "Americas" = "#2980b9",
+  "Asia" = "#d68910",
+  "Europe" = "#8e44ad",
+  "Oceania" = "#16a085",
+  "Unknown" = "#7f8c8d"
+)
+
+wealth_frames <- panel |>
+  filter(year >= year_min, year <= year_max) |>
   mutate(
+    continent = countrycode::countrycode(
+      country,
+      origin = "country.name",
+      destination = "continent",
+      warn = FALSE
+    ),
+    continent = factor(
+      dplyr::coalesce(continent, "Unknown"),
+      levels = continent_lvls
+    ),
     log_gdp = log10(pmax(gdp_per_capita, 1)),
     text = paste0(
-      country, "<br>",
+      country, " (", year, ")<br>",
+      "Continent: ", as.character(continent), "<br>",
       "Mortality: ", round(child_mortality, 1), " / 1,000<br>",
       "GDP/cap: ", fmt_dollars(gdp_per_capita), "<br>",
       "Income: $", round(avg_daily_income_ppp, 2), " / day"
     )
   )
 
+x_rng <- range(wealth_frames$log_gdp, na.rm = TRUE)
+y_rng <- range(wealth_frames$child_mortality, na.rm = TRUE)
+pad_x <- max(diff(x_rng) * 0.03, 0.02)
+pad_y <- max(diff(y_rng) * 0.03, 1)
+max_inc <- max(wealth_frames$avg_daily_income_ppp, na.rm = TRUE)
+sizeref_val <- max(2 * max_inc / 40^2, 0.08)
+
 plot_ly(
-  b,
+  wealth_frames,
   x = ~log_gdp,
   y = ~child_mortality,
   size = ~avg_daily_income_ppp,
-  color = ~avg_daily_income_ppp,
+  color = ~continent,
+  colors = continent_cols,
+  frame = ~year,
   text = ~text,
   type = "scatter",
   mode = "markers",
-  marker = list(sizemode = "diameter", sizeref = 0.15, line = list(width = 0.4, color = "white")),
+  marker = list(
+    sizemode = "diameter",
+    sizeref = sizeref_val,
+    line = list(width = 0.4, color = "white")
+  ),
   hoverinfo = "text"
 ) |>
   layout(
     title = list(
-      text = paste0("log10(GDP per capita) vs child mortality (", snapshot_year, ")"),
+      text = paste0(
+        "log10(GDP per capita) vs under-5 mortality (",
+        year_min, "–", year_max, ", animated by year)"
+      ),
       font = list(size = 14)
     ),
-    xaxis = list(title = "log10(GDP per capita, PPP $)"),
-    yaxis = list(title = "Under-5 deaths per 1,000 live births"),
+    xaxis = list(
+      title = "log10(GDP per capita, PPP $)",
+      range = c(x_rng[1] - pad_x, x_rng[2] + pad_x)
+    ),
+    yaxis = list(
+      title = "Under-5 deaths per 1,000 live births",
+      range = c(max(0, y_rng[1] - pad_y), y_rng[2] + pad_y)
+    ),
     margin = list(l = 70, r = 20, t = 56, b = 50),
-    showlegend = TRUE
+    showlegend = TRUE,
+    legend = list(title = list(text = "Continent"), orientation = "h", y = 1.12)
   ) |>
-  colorbar(title = "PPP $<br>per day")
+  animation_opts(frame = 120, transition = 0, redraw = TRUE) |>
+  animation_slider(
+    currentvalue = list(prefix = "Year ", font = list(size = 14))
+  ) |>
+  config(displayModeBar = TRUE, displaylogo = FALSE)
 ```
 
 ## Row {height="480px"}
