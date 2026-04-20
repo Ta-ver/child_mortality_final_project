@@ -615,7 +615,7 @@ plot_ly(
 ###  {width="50%"}
 
 ::: {.card title="Key Takeaways"}
--   **Wealth vs. survival:** Countries with higher log GDP per capita or higher daily income usually show **lower** under-5 mortality, but the cloud is wide—policy, inequality, and conflict matter beyond averages.
+-   **Wealth vs. survival:** Countries with higher log GDP per capita or higher daily income usually show **lower** under-5 mortality, but the cloud is wide - policy, inequality, and conflict matter beyond averages.
 -   **GDP deciles:** Mean child mortality **falls** from the lowest to the highest GDP decile at the snapshot year, while mean income rises with the same grouping - purely descriptive aggregation.
 -   **Global lines:** The three series scaled to their own maxima show **parallel long-run movement**: GDP and income rise while mean child mortality falls (unweighted country means each year).
 :::
