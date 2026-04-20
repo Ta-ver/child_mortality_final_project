@@ -612,7 +612,7 @@ plot_ly(
 
 ## Row 1 {height="420px"}
 
-### {width=50%}
+###  {width="50%"}
 
 ::: {.card title="Key Takeaways"}
 -   **Wealth vs. survival:** Countries with higher log GDP per capita or higher daily income usually show **lower** under-5 mortality, but the cloud is wide—policy, inequality, and conflict matter beyond averages.
@@ -620,7 +620,7 @@ plot_ly(
 -   **Global lines:** The three series scaled to their own maxima show **parallel long-run movement**: GDP and income rise while mean child mortality falls (unweighted country means each year).
 :::
 
-### {width=50%}
+###  {width="50%"}
 
 ```{r}
 cat("title=", paste0("Interactive Country Table (", snapshot_year, ")"))
@@ -898,5 +898,3 @@ Comparing these indicators matters because wealth and income are strongly associ
 **Note on averages:** line charts labelled “global average” use a **simple mean across countries** in each year (each country weighted equally), not a population-weighted world average.
 
 **Cross-indicator page:** deciles split countries at a single snapshot year (`r snapshot_year`) by GDP per capita. A small number of economies appear in the mortality file but not in the GDP/income tables; those rows are excluded from merged views.
-
-**Publishing:** render the project (`quarto render`) with `output-dir: docs` (see `_quarto.yml`), enable GitHub Pages from the `/docs` branch folder, and set the site URL in the dashboard YAML `github` button when your repository is public.
